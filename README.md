@@ -2,6 +2,8 @@
 
 A C++17 command-line tool for validating a historical close-price CSV, calculating adjacent simple price returns and trailing simple moving averages (SMA), and exporting aligned results. It includes two SMA algorithms, doctest tests, Google Benchmark comparisons, and Doxygen documentation.
 
+[Repository](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [Published documentation](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [GitHub Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
+
 The tool processes one asset, currency, and consistent price basis at a time. The included data is explicitly synthetic. It computes indicators; it does not place orders, model trading costs, or establish a profitable strategy.
 
 ## Requirements and build
@@ -98,7 +100,7 @@ bash scripts/verify.sh
 
 Doxygen creates build/docs/html/index.html and API pages. The verification script runs configuration, build, tests, performance comparison, JSON checks, and documentation, stopping on failure.
 
-**Published documentation: pending the first successful GitHub Pages deployment.** After deployment, replace this sentence with the actual, verified documentation URL.
+**Published documentation:** [Market Data Toolkit API and project guide](https://xinrui-dong.github.io/market-data-toolkit-cpp/).
 
 ## Structure and automation
 
@@ -118,8 +120,8 @@ scripts/verify.sh     Complete local verification
 AGENTS.md             Actual commands and coding-agent constraints
 ~~~
 
-GitHub Actions is configured for pushes, pull requests, and manual runs. It saves benchmark JSON and HTML artifacts; Pages publication is enabled separately with the ENABLE_PAGES repository variable. See [GitHub setup](docs/github-setup.md).
+GitHub Actions runs on pushes, pull requests, and manual runs. It saves benchmark JSON and HTML artifacts. Pages publication is enabled in this repository with the ENABLE_PAGES repository variable. See [GitHub setup and the initial verification record](docs/github-setup.md).
 
-Local success and workflow static validation are not remote CI or deployment evidence. A public repository, actual passing Actions run, and working Pages link still need to be established before submission.
+The [first verified push run](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions/runs/38650139416) completed the build, tests, benchmark, Doxygen generation, and Pages deployment for commit [d63f6d4](https://github.com/xinrui-dong/market-data-toolkit-cpp/commit/d63f6d43063192c686cc360565a17de514eeacfc) on 2026-10-14. Check the corresponding Actions run and deployment for later commits before treating them as verified.
 
 See [extension notes](docs/extension.md) for future changes to data adapters or indicators.

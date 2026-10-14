@@ -1,17 +1,19 @@
 # GitHub Actions 与文档发布
 
-这个目录提供金融历史行情 CSV 检查、收益率与两种 SMA 算法的 C++ 项目。已有 workflow 文件并不表示它已在 GitHub 运行成功；本地构建成功也不等于线上 CI 或 Pages 验证成功。
+这个项目完成金融历史行情 CSV 检查、收益率与两种 SMA 算法计算。公开仓库、GitHub Actions 和 GitHub Pages 已完成首轮发布与验证，记录日期为 2026-10-14。
 
-## 上传时选择正确的仓库根目录
+[公开仓库](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [文档网站](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [Actions 运行入口](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-**新 GitHub 仓库应以本地 `cpp-course-template/` 的内容为根。** GitHub 仓库首页应直接看到 `CMakeLists.txt`、`README.md`、`AGENTS.md`、`src/`、`tests/`、`benchmarks/` 和 `.github/`。
+## 仓库根目录与配置复用
+
+**本仓库以本地 `cpp-course-template/` 的内容为根。** 仓库首页直接包含 `CMakeLists.txt`、`README.md`、`AGENTS.md`、`src/`、`tests/`、`benchmarks/` 和 `.github/`。在其他仓库复用时也应保持这个层级。
 
 不要把包含课件、作业 PDF 和本机环境文件的整个课程文件夹上传。也不要再给源码套一层 `cpp-course-template/`：GitHub 只识别仓库根目录下的 `.github/workflows/`，本 workflow 的 CMake 命令也从仓库根目录运行。
 
-决定正式仓库名称、准备好账号和发布设置后，再执行下面的步骤。本文件没有创建远程仓库或推送代码。
+下面保留在其他仓库复用或重建配置的步骤；本项目的公开仓库已建立，首次推送与线上验证已完成。
 
 1. 在 GitHub 创建公开仓库，名称使用最终确定的项目名。
-2. 将本模板的源文件放到该仓库根目录，保留隐藏的 `.github/` 和 `.gitignore`，以及已随模板提供的第三方源码包和许可说明。
+2. 将项目源文件放到该仓库根目录，保留隐藏的 `.github/` 和 `.gitignore`，以及随项目提供的第三方源码包和许可说明。
 3. 不上传 `build/`、生成的 HTML、本机环境目录或凭据。依赖源码包按模板现有结构保留，保证新克隆也能构建。
 4. 推送后打开仓库的 **Actions**，检查 `Build, test, benchmark and docs` 这次运行的每个步骤。
 5. 后续修改功能时同步更新测试、benchmark、README 和 API 文档，再重新运行全部验证。
@@ -36,11 +38,11 @@ benchmark 的实测结果打印在 **Run benchmarks** 日志中，并写入 `bui
 
 ## 启用 GitHub Pages
 
-模板使用仓库变量 **`ENABLE_PAGES`** 作为明确的发布开关。未设置或未设为 `true` 时，构建、测试、测速、Doxygen 生成和普通 artifact 上传仍运行，Pages 上传与部署会显示跳过。
+项目使用仓库变量 **`ENABLE_PAGES`** 作为明确的发布开关。本仓库已启用该开关，并完成首次 Pages 部署。在其他仓库复用时，若未设置或未设为 `true`，构建、测试、测速、Doxygen 生成和普通 artifact 上传仍运行，Pages 上传与部署会显示跳过。
 
-**Pages 部署跳过时，作业第 5 项“自动发布文档”尚未完成，不能据此声称第 5 项已满足满分要求。**
+复用时需要同时完成 Pages 发布设置和开关设置；只上传 HTML artifact 不会公开文档网站。
 
-在正式公开仓库准备好之后：
+在其他公开仓库配置 Pages 时：
 
 1. 打开仓库 **Settings → Pages**。
 2. 在 **Build and deployment → Source** 选择 **GitHub Actions**。已有本模板的 workflow，无需再添加另一份 Pages 模板。[GitHub 官方发布源说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
@@ -58,21 +60,20 @@ Pages 只在开关启用、且运行来自**默认分支的 push 或默认分支
 
 若 Pages 配置检查或部署失败，先检查 Source、仓库变量、默认分支与 `github-pages` 环境的分支限制；按报错修复后重跑。不要用忽略错误代替真正部署成功。无需为本模板额外保存个人访问令牌。
 
-## 线上验收记录
+## 首轮线上验证记录
 
-正式提交前，需要记录实际结果；以下值目前留空，不能预填成“已通过”。
+以下证据对应 2026-10-14 的首次成功提交。它记录已完成的线上运行；后续提交应分别检查其 Actions 与 Pages 部署，不能沿用本表证明新提交已经通过。
 
-| 检查项 | 待填写的实际证据 |
+| 检查项 | 首轮实际证据 |
 |---|---|
-| 公开仓库 | 仓库真实链接；未登录可访问 |
-| 最终代码 | 准备提交的 commit ID |
-| CI | 对应该 commit 的 Actions 运行链接及成功状态 |
-| 单元测试 | 实际执行的测试数、通过结果 |
-| benchmark | 日志中的输入规模、耗时和单位；JSON artifact |
-| 文档 | 该 commit 的 Pages 部署成功及可访问地址 |
-| README | 文档链接已替换为真实地址 |
+| 公开仓库 | [market-data-toolkit-cpp](https://github.com/xinrui-dong/market-data-toolkit-cpp)，已确认未登录可访问 |
+| 已验证提交 | [d63f6d43063192c686cc360565a17de514eeacfc](https://github.com/xinrui-dong/market-data-toolkit-cpp/commit/d63f6d43063192c686cc360565a17de514eeacfc) |
+| CI | [push 运行 38650139416](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions/runs/38650139416)，构建检查与 Pages 部署两个 job 的全部步骤成功，发布步骤未跳过 |
+| 测试 | 21 个 doctest 用例与 1 个 CLI 集成测试，共 22 项 CTest 通过 |
+| benchmark | 已核对该运行的 JSON artifact：18 个 workload、54 条 iteration 记录，每个 workload 重复 3 次 |
+| 文档 | [Pages 首页](https://xinrui-dong.github.io/market-data-toolkit-cpp/)与 [course API 页面](https://xinrui-dong.github.io/market-data-toolkit-cpp/namespacecourse.html)已确认匿名访问返回 HTTP 200 |
 
-只有 GitHub 上实际执行成功的日志才能证明线上 CI；只有成功部署并可访问的页面才能证明自动文档发布。当前准备好的模板与本地运行结果，不代替这两类证据。
+正式提交前，在 [Actions 入口](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)找到准备提交的具体 commit，确认该次检查与部署完整成功，并再次打开文档链接。README 和本说明中的首轮记录不代替后续提交的验收。
 
 ## Actions 版本依据
 
