@@ -1,0 +1,108 @@
+name: Build, test, benchmark and docs
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+# New work on a ref replaces its older run; unrelated branches keep running.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-checks:
+    name: CMake, CTest, benchmark and Doxygen
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install build and documentation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y cmake doxygen g++ make
+
+      - name: Show tool versions
+        run: |
+          cmake --version
+          g++ --version
+          doxygen --version
+
+      - name: Configure Release build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Run unit tests
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+
+      - name: Run benchmarks
+        run: |
+          cmake --build build --target run_benchmarks
+          test -s build/benchmark.json
+
+      - name: Generate Doxygen documentation
+        run: |
+          cmake --build build --target docs
+          test -s build/docs/html/index.html
+
+      - name: Save benchmark results
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-results
+          path: build/benchmark.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Save HTML documentation
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: doxygen-html
+          path: build/docs/html
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload GitHub Pages artifact
+        if: >-
+          vars.ENABLE_PAGES == 'true' &&
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build/docs/html
+
+  deploy-pages:
+    name: Publish Doxygen to GitHub Pages
+    needs: build-checks
+    if: >-
+      vars.ENABLE_PAGES == 'true' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check Pages configuration
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Deploy documentation
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

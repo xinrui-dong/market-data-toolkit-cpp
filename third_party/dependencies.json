@@ -1,0 +1,18 @@
+[
+  {
+    "name": "doctest",
+    "version": "2.5.3",
+    "url": "https://codeload.github.com/doctest/doctest/tar.gz/refs/tags/v2.5.3",
+    "archive": "doctest-2.5.3.tar.gz",
+    "sha256": "174ebc4e769928959614789c5b4e9c3d0a0f81a62bb608756b127bfebfb21331",
+    "bytes": 2245013
+  },
+  {
+    "name": "benchmark",
+    "version": "1.9.5",
+    "url": "https://codeload.github.com/google/benchmark/tar.gz/refs/tags/v1.9.5",
+    "archive": "benchmark-1.9.5.tar.gz",
+    "sha256": "9631341c82bac4a288bef951f8b26b41f69021794184ece969f8473977eaa340",
+    "bytes": 267155
+  }
+]

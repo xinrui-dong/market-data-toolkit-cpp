@@ -1,0 +1,6 @@
+/build*/
+/local-verification/
+.DS_Store
+.idea/
+.vscode/
+*.user
