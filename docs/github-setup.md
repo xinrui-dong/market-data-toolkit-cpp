@@ -30,11 +30,13 @@ cmake --build build --target run_benchmarks
 cmake --build build --target docs
 ```
 
-CI 安装 CMake、G++、Make 和 Doxygen。单元测试和 benchmark 所需的第三方源码已随模板提供，CI 不再通过 apt 安装这两个库。实际工具版本在 Actions 日志中显示。
+CI 安装 CMake、G++、Make、Doxygen 和 Python 3（文档校验要求 Python ≥ 3.9，仅使用标准库）。单元测试和 benchmark 所需的第三方源码已随模板提供，CI 不再通过 apt 安装这两个库。实际工具版本在 Actions 日志中显示。
 
-benchmark 的实测结果打印在 **Run benchmarks** 日志中，并写入 `build/benchmark.json`；Doxygen HTML 输出到 `build/docs/html/`。成功运行后，Actions 页面提供 `benchmark-results` 和 `doxygen-html` 两个 artifact，当前保留期设置为 14 天。artifact 是供下载检查的运行产物，**上传 artifact 不等于已发布公开文档网站**。
+benchmark 的实测结果打印在 **Run benchmarks** 日志中，并写入 `build/benchmark.json`；Doxygen HTML 输出到 `build/docs/html/`，随后检查 HTML 中的本地 href/src 引用与 HTML 锚点，缺失时文档目标失败。成功运行后，Actions 页面提供 `benchmark-results` 和 `doxygen-html` 两个 artifact，当前保留期设置为 14 天。artifact 是供下载检查的运行产物，**上传 artifact 不等于已发布公开文档网站**。
 
 0.3.0 将窗口扩展为 1、2、3、5、10、20、100，共 42 个工作负载，默认各测 3 次。CTest 同时运行文件替换、精确 CLI 错误检查，以及 benchmark JSON 校验器的回归测试。测速目标随后检查完整的 42 组原始测量，少测、重复编号或只剩统计汇总都会使 CI 失败。下方首轮记录保留的是 0.2.0 当时的 22 项测试和 18 组测速，当前提交的结果应查看对应运行。
+
+0.3.1 改用 Doxygen 静态菜单，修复短成员列表的字母跳转问题，并新增文档校验器回归测试，默认共 31 项 CTest。文档生成和链接校验均成功后才上传 HTML。
 
 流程没有用 `continue-on-error` 忽略编译、测试或测速错误。`--no-tests=error` 防止“没有发现任何测试”被当作测试成功。同一 ref 的新运行会取消旧运行，其他分支的运行继续保留；最终验收需等待准备提交的那次运行完整成功。
 

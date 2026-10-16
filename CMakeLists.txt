@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(market_data_toolkit VERSION 0.3.0 LANGUAGES CXX)
+project(market_data_toolkit VERSION 0.3.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -98,11 +98,22 @@ endif()
 
 if(COURSE_BUILD_DOCS)
     find_package(Doxygen REQUIRED)
+    find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+    if(BUILD_TESTING)
+        add_test(NAME documentation_link_validation
+            COMMAND "${CMAKE_COMMAND}" -E env PYTHONDONTWRITEBYTECODE=1
+                "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/test_docs_validation.py"
+        )
+        set_tests_properties(documentation_link_validation PROPERTIES TIMEOUT 30)
+    endif()
     configure_file(Doxyfile.in "${CMAKE_BINARY_DIR}/Doxyfile" @ONLY)
     add_custom_target(docs
         COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_BINARY_DIR}/Doxyfile"
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_docs.py"
+            "${CMAKE_BINARY_DIR}/docs/html"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL
-        COMMENT "Generate HTML documentation in build/docs/html"
+        VERBATIM
+        COMMENT "Generate HTML documentation and validate local links and anchors"
     )
 endif()

@@ -15,6 +15,8 @@ EXTRACT_ALL            = NO
 FULL_PATH_NAMES        = NO
 STRIP_FROM_PATH        = "@PROJECT_SOURCE_DIR@"
 GENERATE_HTML          = YES
+# Static menus avoid missing letter anchors in short member lists in 1.18.0.
+HTML_DYNAMIC_MENUS     = NO
 GENERATE_LATEX         = NO
 HAVE_DOT               = NO
 QUIET                  = YES

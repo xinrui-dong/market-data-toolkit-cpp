@@ -31,13 +31,14 @@ jobs:
       - name: Install build and documentation tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y cmake doxygen g++ make
+          sudo apt-get install --no-install-recommends -y cmake doxygen g++ make python3
 
       - name: Show tool versions
         run: |
           cmake --version
           g++ --version
           doxygen --version
+          python3 --version
 
       - name: Configure Release build
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

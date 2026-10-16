@@ -16,6 +16,7 @@ allowed finance-related self-selected projects.
 - `docs/`: usage, extension, and GitHub setup notes.
 - `data/`: explicitly synthetic fixtures; never describe them as real prices.
 - `cmake/`: benchmark-result validation.
+- `scripts/check_docs.py`: read-only HTML file/anchor validation, using Python 3.9+ standard library.
 - `.github/workflows/ci.yml`: build, testing, benchmark, documentation, and optional Pages deployment.
 
 ## Commands
@@ -30,7 +31,7 @@ cmake --build build --target run_benchmarks
 cmake --build build --target docs
 ```
 
-`bash scripts/verify.sh` runs that complete sequence. Run the application with:
+`bash scripts/verify.sh` runs that complete sequence. Documentation needs Doxygen and Python 3.9+; the docs target checks local files and HTML anchors after generation. Run the application with:
 
 ```sh
 ./build/bin/market_data --input data/sample_prices.csv --window 3 --output build/analysis.csv
@@ -59,4 +60,5 @@ starts at `build/docs/html/index.html`.
 - Keep the same input, validation, output allocation, and build options when
   benchmarking the two algorithms. A benchmark error must fail verification.
 - Do not commit generated build output, credentials, classroom PDFs, or private data.
+- Keep documentation navigation usable with static menus. A missing local HTML target or anchor must fail the docs target; do not hide checker failures or rewrite pages to bypass validation.
 - Explain nontrivial changes in terms the student can reproduce. Keep comments concise and accurate.

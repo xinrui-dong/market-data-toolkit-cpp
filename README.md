@@ -4,7 +4,7 @@ A C++17 command-line tool for validating a historical close-price CSV, calculati
 
 [Repository](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [Published documentation](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [GitHub Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-**Homework submission:** [one-page acceptance index / 作业验收索引](docs/作业验收索引.md) · [fixed version v0.3.0](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.0). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
+**Homework submission:** [one-page acceptance index / 作业验收索引](docs/作业验收索引.md) · [fixed version v0.3.1](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.1). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
 
 The tool processes one asset, currency, and consistent price basis at a time. The included data is explicitly synthetic. It computes indicators; it does not place orders, model trading costs, or establish a profitable strategy.
 
@@ -12,7 +12,7 @@ The tool processes one asset, currency, and consistent price basis at a time. Th
 
 - A C++17 compiler and a build tool such as Make.
 - CMake 3.24 or newer.
-- Doxygen for the documentation target.
+- Doxygen and Python 3.9 or newer for the documentation target and its link checks (Python standard library only).
 
 doctest 2.5.3 and Google Benchmark 1.9.5 are included as official source archives. CMake verifies their SHA256 hashes and builds them locally, without downloading dependencies during configuration. See [dependency provenance and licenses](third_party/README.md).
 
@@ -104,7 +104,9 @@ cmake --build build --target docs
 bash scripts/verify.sh
 ~~~
 
-Doxygen creates build/docs/html/index.html and API pages. The verification script runs configuration, build, tests, performance comparison, JSON checks, and documentation, stopping on failure.
+Doxygen creates build/docs/html/index.html and API pages. Static menus keep member navigation usable across Doxygen versions, including 1.18.0's short-member-list case. The docs target then checks every generated HTML page's local href/src references and target HTML anchors; a missing file or anchor fails the build. The checker is read-only and does not rewrite generated pages or request external websites.
+
+The verification script runs configuration, build, 31 CTest entries, performance comparison, JSON checks, and documentation with link validation, stopping on failure. The documentation-checker regression test rejects missing assets and anchors, including the short-member-list failure. To check an existing HTML directory separately, run `python3 scripts/check_docs.py build/docs/html`.
 
 **Published documentation:** [Market Data Toolkit API and project guide](https://xinrui-dong.github.io/market-data-toolkit-cpp/).
 
@@ -123,6 +125,7 @@ cmake/                Benchmark JSON validation
 docs/                 Algorithms, usage, and GitHub setup
 third_party/          Pinned archives, hashes, and licenses
 scripts/verify.sh     Complete local verification
+scripts/check_docs.py Local HTML file and anchor validation
 .github/workflows/    Build, test, benchmark, docs, optional Pages
 AGENTS.md             Actual commands and coding-agent constraints
 ~~~
