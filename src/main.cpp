@@ -1,4 +1,5 @@
 #include "course/core.hpp"
+#include "course/atomic_output.hpp"
 
 #include <charconv>
 #include <filesystem>
@@ -115,20 +116,14 @@ int main(int argc, char* argv[]) {
             ? course::sma_naive(prices, options.window)
             : course::sma_rolling(prices, options.window);
 
-        // Calculate before opening an output file: bad input must not leave
-        // an empty or apparently successful result file.
+        // Calculate before creating output. File output is committed only
+        // after writing, flushing, and closing the private temporary file.
         if (options.output.empty()) {
             course::write_analysis_csv(std::cout, records, returns, sma, options.window);
         } else {
-            std::ofstream output(options.output);
-            if (!output) {
-                throw std::runtime_error("could not open output file: " + options.output);
-            }
-            course::write_analysis_csv(output, records, returns, sma, options.window);
-            output.close();
-            if (!output) {
-                throw std::runtime_error("could not close output file: " + options.output);
-            }
+            course::write_file_atomically(options.output, [&](std::ostream& output) {
+                course::write_analysis_csv(output, records, returns, sma, options.window);
+            });
         }
         return 0;
     } catch (const std::exception& error) {

@@ -76,8 +76,8 @@ void measure_sma(benchmark::State& state) {
 }
 
 void sma_arguments(benchmark::Benchmark* benchmark) {
-    for (const std::int64_t count : {1024, 16384, 65536}) {
-        for (const std::int64_t window : {1, 20, 100}) {
+    for (const std::int64_t count : {COURSE_BENCHMARK_COUNTS}) {
+        for (const std::int64_t window : {COURSE_BENCHMARK_WINDOWS}) {
             benchmark->Args({count, window});
         }
     }

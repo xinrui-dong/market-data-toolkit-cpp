@@ -9,7 +9,8 @@ allowed finance-related self-selected projects.
 
 - `include/course/`: public interfaces and Doxygen contracts.
 - `src/`: CSV I/O, numeric indicators, and the command-line application.
-- `tests/`: doctest unit tests.
+- `src/atomic_output.cpp`: staged output and replacement after successful close.
+- `tests/`: doctest, exact CLI error checks, and benchmark-validator regression tests.
 - `benchmarks/`: Google Benchmark workloads.
 - `third_party/`: pinned official source archives, hashes, and licenses.
 - `docs/`: usage, extension, and GitHub setup notes.
@@ -49,6 +50,10 @@ starts at `build/docs/html/index.html`.
 - Preserve user edits. Do not change the selected project scope, create a remote repository, publish a website, or submit homework unless asked.
 - Keep CSV validation strict and diagnostics actionable. Do not silently sort,
   drop, or fill records. Preserve empty warm-up cells in the output.
+- Preserve existing output files when writing or replacement fails. Test both
+  successful replacement and failures after partial temporary output.
+- Benchmark validation must verify exact workload names and every expected
+  raw repetition; aggregate rows cannot substitute for measurement records.
 - Validate both SMA implementations against independent examples and numeric
   stress cases. Do not require universal bitwise equality or claim fixed speedups.
 - Keep the same input, validation, output allocation, and build options when

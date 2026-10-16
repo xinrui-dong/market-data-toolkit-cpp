@@ -1,37 +1,59 @@
 # Local SMA benchmark results
 
-This is a measured local snapshot from 2026-10-14, not a required speedup or a remote CI result. The [JSON snapshot](benchmark-20261014.json) preserves the measured entries; only the host name was removed from its context. New runs write `build/benchmark.json` and may differ.
+This measured Release snapshot was recorded on 2026-10-16. The [JSON snapshot](benchmark-20261016.json) preserves all measurement entries; only the host name was removed from its context. New runs write `build/benchmark.json`. This is a local measurement, separate from the benchmark executed by GitHub Actions.
 
 ## Reproduction and scope
 
 Run from the project root:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOURSE_BENCHMARK_REPETITIONS=3
 cmake --build build --parallel 2
 cmake --build build --target run_benchmarks
 ```
 
-The snapshot uses Apple Clang 21.0.0, C++17, CMake 4.4.3, Google Benchmark 1.9.5, and a Release build on macOS arm64. Each workload has three repetitions with a minimum requested time of 0.02 seconds per repetition. Data is deterministic synthetic positive prices, not observed market prices.
+The snapshot uses Apple Clang 21.0.0, C++17, CMake 4.4.3, Google Benchmark 1.9.5, and a Release build on macOS arm64. Each workload has three repetitions with a minimum requested time of 0.02 seconds per repetition. Data is deterministic synthetic positive prices near 100.
 
-The table uses the median of the three CPU-time measurements, converted from nanoseconds to microseconds. The ratio is naive time divided by rolling time; a ratio below 1 means rolling was slightly slower. This ratio includes input validation, returned-vector allocation/destruction, and the rolling queue cost; it excludes CSV I/O, data generation, and the preliminary result cross-check. See [algorithm and benchmark method](algorithms.md).
+Both methods use the same input and include input validation, output-vector allocation/destruction, and their own algorithm overhead. CSV I/O, data generation, and the preliminary result cross-check are excluded. The table uses the median of the three CPU times, converted from nanoseconds to microseconds. The ratio is naive time divided by rolling time: below 1 favors naive; above 1 favors rolling. See the [algorithm and benchmark method](algorithms.md).
+
+## Results, including small windows
 
 | Observations n | Window w | Naive CPU median (µs) | Rolling CPU median (µs) | Naive / rolling |
 |---:|---:|---:|---:|---:|
-| 1024 | 1 | 0.448 | 0.453 | 0.989 |
-| 1024 | 20 | 54.253 | 18.650 | 2.909 |
-| 1024 | 100 | 409.725 | 19.105 | 21.446 |
-| 16384 | 1 | 6.863 | 6.959 | 0.986 |
-| 16384 | 20 | 898.581 | 296.688 | 3.029 |
-| 16384 | 100 | 7335.500 | 310.733 | 23.607 |
-| 65536 | 1 | 28.286 | 28.385 | 0.997 |
-| 65536 | 20 | 3603.375 | 1177.304 | 3.061 |
-| 65536 | 100 | 28998.000 | 1248.136 | 23.233 |
+| 1024 | 1 | 0.412 | 0.436 | 0.943 |
+| 1024 | 2 | 4.947 | 10.459 | 0.473 |
+| 1024 | 3 | 6.567 | 12.671 | 0.518 |
+| 1024 | 5 | 9.676 | 14.816 | 0.653 |
+| 1024 | 10 | 20.450 | 17.579 | 1.163 |
+| 1024 | 20 | 51.210 | 17.519 | 2.923 |
+| 1024 | 100 | 391.932 | 18.145 | 21.600 |
+| 16384 | 1 | 6.525 | 6.797 | 0.960 |
+| 16384 | 2 | 81.291 | 176.988 | 0.459 |
+| 16384 | 3 | 107.303 | 202.806 | 0.529 |
+| 16384 | 5 | 157.824 | 244.078 | 0.647 |
+| 16384 | 10 | 331.494 | 270.748 | 1.224 |
+| 16384 | 20 | 833.515 | 289.312 | 2.881 |
+| 16384 | 100 | 6938.500 | 314.109 | 22.089 |
+| 65536 | 1 | 26.841 | 28.253 | 0.950 |
+| 65536 | 2 | 324.506 | 704.775 | 0.460 |
+| 65536 | 3 | 431.538 | 820.912 | 0.526 |
+| 65536 | 5 | 627.977 | 982.621 | 0.639 |
+| 65536 | 10 | 1337.400 | 1109.840 | 1.205 |
+| 65536 | 20 | 3340.000 | 1200.250 | 2.783 |
+| 65536 | 100 | 27440.000 | 1264.000 | 21.709 |
 
-## Interpretation
+## What the small-window experiment shows
 
-For n = 65536 and w = 100, the measured CPU medians were 28.998 ms and 1.248136 ms, a ratio of about 23.23. The rolling implementation avoids recomputing each complete window. At w = 1, both methods copy the input after validation and have almost identical timing; these measurements show no rolling advantage. Window size and allocation overhead matter.
+At all three tested sizes, naive was faster for windows 2, 3, and 5; rolling was faster for windows 10, 20, and 100. The sampled change in the winner therefore lies between windows 5 and 10 on this machine. Windows 6–9 were not measured, so this does not identify an exact crossover or a universal threshold.
 
-The run reported CPU-frequency metadata and thread-affinity warnings on macOS. Google Benchmark could not read `hw.cpufrequency`, so the JSON frequency field must not be treated as the actual CPU frequency. The reported durations are still measurements; load, frequency changes, scheduling, compiler, and hardware limit comparisons across machines. There is no universal performance or numerical-accuracy guarantee.
+For n = 65536, window 2 took 324.506 µs with naive and 704.775 µs with rolling. Maintaining the two stacks costs more than summing two prices. At window 10 the times were 1337.400 µs and 1109.840 µs; at window 100 they were 27440.000 µs and 1264.000 µs, a ratio of about 21.71. Repeated window summation increasingly dominates the naive method.
 
-All 18 workloads produced successful measurement entries. The target additionally validated the JSON so `SkipWithError` or missing workloads could not silently count as a successful benchmark run.
+Window 1 uses the same validation-and-copy fast path in both methods. Its small timing differences do not demonstrate a queue optimization. Both implementations remain explicitly selectable; this experiment does not add an automatic method switch or a new numerical algorithm.
+
+All 42 workloads had exactly three raw measurements: 126 iteration records plus 168 aggregate rows, 294 JSON entries in total. The strengthened validator checked exact names, unique repetition indices, counts, positive finite timings, and consistent units. Its CTest regression suite also rejected aggregate-only input, missing repetitions, duplicates, unexpected names, and invalid timings.
+
+## Measurement limits and earlier snapshot
+
+The run reported macOS CPU-frequency and thread-affinity warnings. Google Benchmark could not read `hw.cpufrequency`; the JSON frequency field must not be interpreted as the actual CPU frequency. The full workload families run in registration order, with three short repetitions. System load, clock behavior, order effects, compiler, and hardware can change both timings and the crossover. These results support the reported workload comparisons, not a fixed speedup on other machines.
+
+The [2026-10-14 snapshot](benchmark-20261014.json) retains the earlier 18-workload experiment with windows 1, 20, and 100. It is historical evidence, not an additional repetition of this experiment.

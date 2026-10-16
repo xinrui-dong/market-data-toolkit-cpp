@@ -135,10 +135,10 @@ compare `BM_SMA_Naive` and `BM_SMA_Rolling` at every pair from:
 
 ```text
 n      = 1024, 16384, 65536
-window = 1, 20, 100
+window = 1, 2, 3, 5, 10, 20, 100
 ```
 
-There are nine workloads per method. Both receive the same deterministic,
+There are 21 workloads per method, 42 in total. Both receive the same deterministic,
 strictly positive synthetic price series near 100, with a repeating component
 and small oscillations. The series is not a measured financial dataset.
 
@@ -163,6 +163,11 @@ with `DoNotOptimize` and uses `ClobberMemory` to discourage optimization that
 would remove the measured work. The reported item count is input prices per
 iteration, not output rows or arithmetic operations.
 
+Windows 2, 3, 5, and 10 measure the region where direct summation can cost less
+than maintaining a two-stack queue. Window 1 has a shared copy-only fast path;
+its timing does not measure the queue. The same implementations are used for
+all other windows, so a crossover is observed rather than imposed by a selector.
+
 Run the `run_benchmarks` CMake target described in the README. Its console output
 and `build/benchmark.json` contain the actual measurements and runtime context.
 Compare the methods only for matching `n`, `window`, build configuration, and
@@ -173,5 +178,12 @@ and the small-window cases can dominate part of the cost.
 The fixed set of benchmark inputs provides evidence for those runs. It does not
 guarantee that the rolling implementation is faster in every workload. No timing
 or speedup values are filled in before measurement.
+
+The JSON check expects every registered algorithm/size/window name and, by
+default, repetition indices 0, 1, and 2 exactly once for each name. Each raw
+measurement must have a positive iteration count and valid positive CPU and
+real times in a recognized unit. Missing raw measurements, duplicate indices,
+unexpected workloads, and benchmark errors cause failure. Aggregate rows alone
+are insufficient. Regression tests exercise these rejection cases through CTest.
 
 A [local measured snapshot](benchmark-results.md) records one Release run, including the window-1 results and runtime limitations.

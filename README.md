@@ -30,6 +30,8 @@ The default SMA algorithm is rolling. To select the reference implementation:
 
 Without --output, the CSV is written to stdout. --help explains all options. Exit codes are 0 for success, 2 for invalid arguments, and 1 for input, calculation, or output errors. The program refuses to overwrite its input file.
 
+For --output, the program writes to a private temporary directory beside the destination and replaces the requested file only after writing and closing succeed. A reported write or replacement failure preserves an existing result. Existing file permission bits are retained; output directories and symbolic links are rejected. This provides atomic visibility on the tested macOS/Linux filesystems, without promising power-loss durability, preservation of all file metadata, or coordination with external concurrent writers.
+
 ## Input contract
 
 The restricted CSV format has exactly two columns:
@@ -77,7 +79,7 @@ Both use compensated summation to reduce rounding loss. The queue removes old ob
 ctest --test-dir build --output-on-failure --no-tests=error
 ~~~
 
-doctest cases cover CSV and calendar rules, independent hand-computed values, invalid prices/windows, arithmetic overflow, mixed numerical scales, algorithm agreement, and output alignment. A separate command-line test checks valid files, stdout behavior, argument errors, bad inputs, and failed output paths. An empty test configuration is an error.
+doctest cases cover CSV and calendar rules, independent hand-computed values, invalid prices/windows, arithmetic overflow, mixed numerical scales, algorithm agreement, output alignment, and safe file replacement. Command-line tests check exact exit codes, diagnostic text, empty stdout on failure, and preservation of existing input/output files. Benchmark-validator regression tests reject incomplete or malformed measurement sets. An empty test configuration is an error.
 
 ## Fair performance comparison
 
@@ -85,9 +87,11 @@ doctest cases cover CSV and calendar rules, independent hand-computed values, in
 cmake --build build --target run_benchmarks
 ~~~
 
-Google Benchmark compares both SMA implementations for n = 1024, 16384, 65536 and window = 1, 20, 100: 18 workloads, each repeated three times.
+Google Benchmark compares both SMA implementations for n = 1024, 16384, 65536 and window = 1, 2, 3, 5, 10, 20, 100: 42 workloads, each repeated three times by default. Windows 2–10 expose the cost of maintaining the rolling queue when a direct sum is short.
 
-Both algorithms receive the same deterministic synthetic input and include validation plus result-vector allocation/destruction. CSV I/O and input generation are outside timing. Results are cross-checked before measurement; benchmark errors also fail the JSON validation step.
+Set `-DCOURSE_BENCHMARK_REPETITIONS=5` during CMake configuration to collect more repetitions. The measurement command and JSON validator use the same configured count.
+
+Both algorithms receive the same deterministic synthetic input and include validation plus result-vector allocation/destruction. CSV I/O and input generation are outside timing. Results are cross-checked before measurement. The JSON validator requires the exact workload names and the configured number of distinct, valid iteration records per workload; aggregate statistics cannot substitute for raw measurements. Benchmark errors, missing cases, duplicate repetitions, or invalid timings fail the target.
 
 Results appear in the terminal and build/benchmark.json, including individual repetitions and aggregates. Compare matching workloads and CPU-time units. The small-window case is retained even if neither algorithm wins clearly; no fixed speedup is required on shared CI machines. See the [measured local snapshot](docs/benchmark-results.md) for results and limitations.
 
@@ -108,8 +112,9 @@ Doxygen creates build/docs/html/index.html and API pages. The verification scrip
 include/course/       Price record and public API contracts
 src/core.cpp          CSV validation and output
 src/indicators.cpp    Returns and both SMA algorithms
+src/atomic_output.cpp Safe replacement of output files
 src/main.cpp          Command-line application
-tests/                doctest and command-line tests
+tests/                doctest, command-line and benchmark-validator tests
 benchmarks/           Fair SMA performance comparison
 data/                 Synthetic fixtures and data notes
 cmake/                Benchmark JSON validation

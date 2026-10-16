@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(market_data_toolkit VERSION 0.2.0 LANGUAGES CXX)
+project(market_data_toolkit VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,10 +9,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 include(CTest)
 include(FetchContent)
+include(cmake/benchmark_config.cmake)
 option(COURSE_BUILD_BENCHMARKS "Build the SMA algorithm comparison" ON)
 option(COURSE_BUILD_DOCS "Provide the Doxygen docs target" ON)
+set(COURSE_BENCHMARK_REPETITIONS 3 CACHE STRING "Repetitions of each SMA workload")
+if(NOT COURSE_BENCHMARK_REPETITIONS MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "COURSE_BENCHMARK_REPETITIONS must be a positive integer")
+endif()
 
-add_library(course_core src/core.cpp src/indicators.cpp)
+add_library(course_core src/core.cpp src/indicators.cpp src/atomic_output.cpp)
 target_include_directories(course_core PUBLIC "${PROJECT_SOURCE_DIR}/include")
 if(MSVC)
     target_compile_options(course_core PRIVATE /W4)
@@ -34,7 +39,7 @@ if(BUILD_TESTING)
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_MakeAvailable(doctest)
-    add_executable(course_tests tests/test_core.cpp)
+    add_executable(course_tests tests/test_core.cpp tests/test_atomic_output.cpp)
     target_link_libraries(course_tests PRIVATE course_core doctest::doctest)
     include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")
     doctest_discover_tests(course_tests)
@@ -46,6 +51,12 @@ if(BUILD_TESTING)
             -P "${PROJECT_SOURCE_DIR}/tests/test_cli.cmake"
     )
     set_tests_properties(cli_end_to_end PROPERTIES TIMEOUT 30)
+    add_test(NAME benchmark_json_validation
+        COMMAND "${CMAKE_COMMAND}"
+            "-DWORK_DIR=${CMAKE_BINARY_DIR}/benchmark-validation-test"
+            -P "${PROJECT_SOURCE_DIR}/tests/test_benchmark_validation.cmake"
+    )
+    set_tests_properties(benchmark_json_validation PROPERTIES TIMEOUT 30)
 endif()
 
 if(COURSE_BUILD_BENCHMARKS)
@@ -62,18 +73,25 @@ if(COURSE_BUILD_BENCHMARKS)
     FetchContent_MakeAvailable(benchmark)
     add_executable(course_benchmark benchmarks/benchmark_core.cpp)
     target_link_libraries(course_benchmark PRIVATE course_core benchmark::benchmark)
+    list(JOIN COURSE_BENCHMARK_COUNTS "," benchmark_counts_cpp)
+    list(JOIN COURSE_BENCHMARK_WINDOWS "," benchmark_windows_cpp)
+    target_compile_definitions(course_benchmark PRIVATE
+        "COURSE_BENCHMARK_COUNTS=${benchmark_counts_cpp}"
+        "COURSE_BENCHMARK_WINDOWS=${benchmark_windows_cpp}"
+    )
     add_custom_target(run_benchmarks
         COMMAND "$<TARGET_FILE:course_benchmark>"
             --benchmark_min_time=0.02s
-            --benchmark_repetitions=3
+            "--benchmark_repetitions=${COURSE_BENCHMARK_REPETITIONS}"
             "--benchmark_out=${CMAKE_BINARY_DIR}/benchmark.json"
             --benchmark_out_format=json
         COMMAND "${CMAKE_COMMAND}"
             "-DRESULTS=${CMAKE_BINARY_DIR}/benchmark.json"
-            -DEXPECTED_CASES=18
+            "-DEXPECTED_REPETITIONS=${COURSE_BENCHMARK_REPETITIONS}"
             -P "${PROJECT_SOURCE_DIR}/cmake/check_benchmark.cmake"
         DEPENDS course_benchmark
         USES_TERMINAL
+        VERBATIM
         COMMENT "Compare both SMA algorithms and validate benchmark.json"
     )
 endif()
