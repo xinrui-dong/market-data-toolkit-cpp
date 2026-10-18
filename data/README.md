@@ -21,5 +21,7 @@ Supply only one asset, currency, and consistent price basis per file. With real 
 Source: ECB statistics. The series is `EXR.D.USD.EUR.SP00.A`, USD per EUR,
 from 2 to 31 January 2025. These are reference rates, not exchange closing
 prices. The column name `close` is an adapter to the existing program interface.
+Git attributes preserve the exact bytes of both snapshot CSVs on every platform:
+the original response has CRLF line endings and the normalized input has LF.
 See the [real-data walkthrough](../docs/market-example.md) for reproduction,
 calculated returns and SMA, attribution and interpretation.

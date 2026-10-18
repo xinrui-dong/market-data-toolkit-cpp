@@ -39,7 +39,7 @@ def validate_docs(directory: Path) -> ValidationResult:
     try:
         root = directory.resolve()
         if not root.is_dir():
-            result.errors.append(f"Documentation directory does not exist: {root}")
+            result.errors.append(f"Documentation directory does not exist: {root.as_posix()}")
             return result
         if not (root / "index.html").is_file():
             result.errors.append("Missing documentation entry point: index.html")
@@ -57,7 +57,7 @@ def validate_docs(directory: Path) -> ValidationResult:
 
     pages: Dict[Path, HtmlPage] = {}
     for path in html_files:
-        label = str(path.relative_to(root))
+        label = path.relative_to(root).as_posix()
         try:
             resolved = path.resolve()
             if not resolved.is_relative_to(root):
@@ -72,7 +72,7 @@ def validate_docs(directory: Path) -> ValidationResult:
 
     for source, page in pages.items():
         for line, attribute, reference in page.references:
-            location = f"{source.relative_to(root)}:{line}: {attribute}={reference!r}"
+            location = f"{source.relative_to(root).as_posix()}:{line}: {attribute}={reference!r}"
             try:
                 url = urlsplit(reference)
                 if url.scheme or url.netloc:
@@ -88,7 +88,9 @@ def validate_docs(directory: Path) -> ValidationResult:
                         result.errors.append(f"{location}: directory index escapes documentation root")
                         continue
                 if not target.is_file():
-                    result.errors.append(f"{location}: missing local file {target.relative_to(root)}")
+                    result.errors.append(
+                        f"{location}: missing local file {target.relative_to(root).as_posix()}"
+                    )
                     continue
                 fragment = unquote(url.fragment)
                 if fragment and target.suffix.lower() in (".html", ".htm"):
@@ -97,7 +99,7 @@ def validate_docs(directory: Path) -> ValidationResult:
                         result.errors.append(f"{location}: target HTML could not be read")
                     elif fragment not in target_page.anchors:
                         result.errors.append(
-                            f"{location}: missing anchor #{fragment} in {target.relative_to(root)}"
+                            f"{location}: missing anchor #{fragment} in {target.relative_to(root).as_posix()}"
                         )
             except (OSError, RuntimeError, ValueError) as error:
                 result.errors.append(f"{location}: invalid local reference: {error}")

@@ -1,0 +1,4 @@
+# These recorded snapshots have byte-level provenance checks. Preserve the raw
+# ECB response's CRLF and the normalized fixture's LF on every checkout.
+data/ecb_eurusd_2025_01_source.csv -text
+data/ecb_eurusd_2025_01.csv -text
