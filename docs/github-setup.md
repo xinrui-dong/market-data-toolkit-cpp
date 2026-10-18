@@ -20,26 +20,35 @@ The public repository already exists. When cloning the project, extracting a rel
 
 ## What CI runs
 
-The same Ubuntu workflow is triggered by `push`, `pull_request` and manual `workflow_dispatch` events:
+A three-platform matrix is triggered by `push`, `pull_request` and manual
+`workflow_dispatch` events. It uses Ubuntu 24.04/GCC, macOS 26/Apple Clang and
+Windows Server 2022/MSVC. Each platform executes:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel 2
-ctest --test-dir build --output-on-failure --no-tests=error
-cmake --build build --target run_benchmarks
-cmake --build build --target docs
+cmake --build build --config Release --parallel 2
+ctest --test-dir build -C Release --output-on-failure --no-tests=error
+cmake --build build --config Release --target run_benchmarks
+cmake --build build --config Release --target docs
 ```
 
-CI installs CMake, G++, Make, Doxygen and Python 3. Documentation validation requires Python 3.9 or newer and uses only its standard library. The unit-test and benchmark dependencies are supplied as source archives, so CI does not install those two libraries through apt. The Actions log records the actual tool versions.
+Ubuntu installs CMake, G++, Make, Doxygen and Python 3 through apt. macOS uses
+its runner compiler and installs Doxygen through Homebrew. Windows uses Visual
+Studio and installs Doxygen through Chocolatey. Python 3.9 or newer is needed
+for the frozen real-data test and documentation checks; both use only its
+standard library. The C++ test and benchmark dependencies remain local source
+archives. Actions records actual tool versions. The real ECB example also runs
+as a visible CI step. See [platform details](platforms.md).
 
-Measured benchmark results appear in the **Run benchmarks** log and in `build/benchmark.json`. Doxygen writes HTML to `build/docs/html/`; the documentation target then checks local `href` and `src` references and HTML anchors, failing on missing targets. A successful run provides `benchmark-results` and `doxygen-html` artifacts with a configured retention period of 14 days. Artifacts are downloadable run outputs; uploading HTML as an artifact does not publish a documentation website.
+Measured benchmark results appear in the **Run benchmarks** log and in `build/benchmark.json`. Doxygen writes HTML to `build/docs/html/`; the documentation target then checks local `href` and `src` references and HTML anchors, failing on missing targets. A successful run provides `benchmark-results-<platform>` and `doxygen-html-<platform>` artifacts with a configured retention period of 14 days. Artifacts are downloadable run outputs; uploading HTML as an artifact does not publish a documentation website.
 
 The relevant version changes are:
 
 - **0.3.0:** expanded SMA windows to 1, 2, 3, 5, 10, 20 and 100, giving 42 workloads with three repetitions each by default. CTest also covers file replacement, exact CLI errors and benchmark-validator regressions. The benchmark target checks all expected raw measurements; missing workloads, duplicate repetition indices or aggregate-only results fail verification.
 - **0.3.1:** enabled Doxygen static menus, repaired alphabetical navigation for short member lists and added documentation-validator regressions. The default configuration contains 31 CTest entries. HTML is uploaded only after documentation generation and local-link validation succeed.
 - **0.3.2:** corrected directory names and wording in the documentation, retaining the algorithms, 31 CTest entries and the 42-workload, three-repetition benchmark configuration.
-- **0.3.3:** uses English documentation filenames and English text throughout the deliverable. The algorithms and CI workflow are unchanged. Check the Actions run for the exact submission commit to establish its validation result.
+- **0.3.3:** uses English documentation filenames and English text throughout the deliverable. The algorithms and CI workflow were unchanged.
+- **0.3.4:** adds the frozen ECB EUR/USD example and independent Decimal integration check, an algorithm walkthrough, and the Ubuntu/macOS/Windows CI matrix. Native Windows file replacement and platform-specific failure tests preserve the output-protection contract. The default test suite has 32 CTest entries. Check the exact release commit for its completed matrix and Pages results.
 
 The initial record below belongs to project version **0.2.0**, which had 22 CTest entries and 18 benchmark workloads. Its evidence is fixed by the listed commit and CI run; it does not establish the result of later commits.
 
@@ -58,14 +67,15 @@ To check or restore the Pages configuration:
 3. Open **Settings → Secrets and variables → Actions → Variables**, then select **New repository variable**.
 4. Enter `ENABLE_PAGES` as the name and lowercase `true` as the value. This is a repository variable, not a secret. [GitHub variables documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
 5. Return to **Actions**, open this workflow and choose **Run workflow** for the default branch, or push an actual change to that branch. To rerun the complete process, rerun the workflow rather than only a previously skipped deployment job.
-6. Wait for both **CMake, CTest, benchmark and Doxygen** and **Publish Doxygen to GitHub Pages** to succeed.
+6. Wait for all three platform build jobs and **Publish Doxygen to GitHub Pages** to succeed.
 7. Open the deployment's `page_url` and check the home page and at least one API function page.
 8. Put the successfully accessed URL in the README documentation link. The usual format is `https://<username>.github.io/<repository>/`; use the actual deployment URL.
 9. Push an actual README or documentation update and confirm that the new default-branch commit triggers deployment automatically.
 
 Pages is deployed only when the switch is enabled and the event is a **push to the default branch or a manual run on the default branch**. Other branches and pull requests still run the complete build checks and save the HTML artifact without replacing the published site.
 
-The deployment job depends on successful build checks and uses the `github-pages` environment with `pages: write` and `id-token: write` permissions. The build job has read-only source access. This follows GitHub's separation of build and deployment jobs. [GitHub custom Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+Ubuntu uploads the Pages artifact. The deployment job waits for all three
+platform build jobs to pass and uses the `github-pages` environment with `pages: write` and `id-token: write` permissions. The build job has read-only source access. This follows GitHub's separation of build and deployment jobs. [GitHub custom Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 
 If Pages configuration checks or deployment fail, inspect the publishing source, repository variable, default branch and branch restrictions on the `github-pages` environment. Fix the reported cause and rerun the workflow. Do not suppress failures in place of a successful deployment. No additional personal access token is required by this workflow.
 

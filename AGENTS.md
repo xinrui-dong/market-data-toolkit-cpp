@@ -14,7 +14,8 @@ allowed finance-related self-selected projects.
 - `benchmarks/`: Google Benchmark workloads.
 - `third_party/`: pinned official source archives, hashes, and licenses.
 - `docs/`: usage, extension, and GitHub setup notes.
-- `data/`: explicitly synthetic fixtures; never describe them as real prices.
+- `data/`: synthetic test fixtures plus a separately identified frozen ECB
+  reference-rate snapshot with provenance; never confuse the two.
 - `cmake/`: benchmark-result validation.
 - `scripts/check_docs.py`: read-only HTML file/anchor validation, using Python 3.9+ standard library.
 - `.github/workflows/ci.yml`: build, testing, benchmark, documentation, and optional Pages deployment.
@@ -25,13 +26,15 @@ Run from the project root:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel 2
-ctest --test-dir build --output-on-failure --no-tests=error
-cmake --build build --target run_benchmarks
-cmake --build build --target docs
+cmake --build build --config Release --parallel 2
+ctest --test-dir build -C Release --output-on-failure --no-tests=error
+cmake --build build --config Release --target run_benchmarks
+cmake --build build --config Release --target docs
 ```
 
-`bash scripts/verify.sh` runs that complete sequence. Documentation needs Doxygen and Python 3.9+; the docs target checks local files and HTML anchors after generation. Run the application with:
+`bash scripts/verify.sh` runs that complete sequence on Linux/macOS;
+`./scripts/verify.ps1` runs it in Windows PowerShell. Tests need Python 3.9+.
+Documentation needs Doxygen and Python 3.9+; the docs target checks local files and HTML anchors after generation. Run the application with:
 
 ```sh
 ./build/bin/market_data --input data/sample_prices.csv --window 3 --output build/analysis.csv
@@ -51,6 +54,8 @@ starts at `build/docs/html/index.html`.
 - Preserve user edits. Do not change the selected project scope, create a remote repository, publish a website, or submit homework unless asked.
 - Keep CSV validation strict and diagnostics actionable. Do not silently sort,
   drop, or fill records. Preserve empty warm-up cells in the output.
+- Preserve the ECB source observations and attribution. Update snapshot hashes,
+  normalization checks and the independent Decimal reference together if data changes.
 - Preserve existing output files when writing or replacement fails. Test both
   successful replacement and failures after partial temporary output.
 - Benchmark validation must verify exact workload names and every expected

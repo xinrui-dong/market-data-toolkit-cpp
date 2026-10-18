@@ -1,0 +1,29 @@
+{
+  "source": "European Central Bank",
+  "attribution": "Source: ECB statistics. Returns and SMA are own calculations.",
+  "series": "EXR.D.USD.EUR.SP00.A",
+  "source_url": "https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?startPeriod=2025-01-02&endPeriod=2025-01-31&format=csvdata",
+  "series_url": "https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A",
+  "reference_rate_information": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+  "reuse_policy": "https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html",
+  "retrieved_on": "2026-10-18",
+  "observations": 22,
+  "start": "2025-01-02",
+  "end": "2025-01-31",
+  "base_currency": "EUR",
+  "quote_currency": "USD",
+  "unit": "USD per EUR",
+  "price_basis": "ECB daily foreign exchange reference rate, not a transaction or exchange closing price",
+  "transformation": "Select TIME_PERIOD and OBS_VALUE unchanged; rename columns date and close; retain source observation order. Do not fill missing calendar days.",
+  "corporate_action_adjustment": "Not applicable to this foreign exchange reference-rate series.",
+  "files": {
+    "ecb_eurusd_2025_01_source.csv": {
+      "sha256": "2b806f14006d9fb075b859c462fd1160b4e33f54b0302af36cb10ed4ac74fb07",
+      "bytes": 4899
+    },
+    "ecb_eurusd_2025_01.csv": {
+      "sha256": "ad7c5dd133139acbad6df6929ef3f80ba11f53595368b9cbba3dee3e649666da",
+      "bytes": 404
+    }
+  }
+}

@@ -7,7 +7,9 @@ algorithms. This is a data-processing example; it does not make a trading or
 profitability claim.
 
 See the [README](../README.md) for commands and the generated Doxygen API
-documentation for function contracts and exceptions.
+documentation for function contracts and exceptions. The
+[worked algorithm walkthrough](algorithm-walkthrough.md) traces the queue,
+rounding correction, complexity, and measured small-window tradeoff step by step.
 
 ## Input and alignment
 

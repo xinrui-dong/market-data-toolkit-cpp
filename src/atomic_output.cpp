@@ -9,6 +9,16 @@
 #include <system_error>
 #include <utility>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace course {
 namespace {
 
@@ -58,11 +68,15 @@ public:
                 file_error("could not create temporary output directory", error);
             }
             path_ = std::move(candidate);
+#ifndef _WIN32
+            // Windows directories inherit their parent's ACL; POSIX mode bits
+            // cannot express an equivalent Windows access-control policy.
             fs::permissions(path_, fs::perms::owner_all, fs::perm_options::replace, error);
             if (error) {
                 cleanup();
                 file_error("could not protect temporary output directory", error);
             }
+#endif
             const bool empty = fs::is_empty(path_, error);
             if (error || !empty) {
                 cleanup();
@@ -123,6 +137,19 @@ void write_file_atomically(const std::filesystem::path& destination,
 
     // Recheck the target after writing. Never follow a destination symlink.
     const auto status = check_destination(output_path);
+#ifdef _WIN32
+    (void)status;
+    // Require a same-volume Windows replacement without first deleting the old
+    // result. Unlike MSVC's filesystem::rename implementation, this deliberately
+    // omits MOVEFILE_COPY_ALLOWED and its copy-and-delete fallback.
+    if (!MoveFileExW(temporary_file.c_str(), output_path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING)) {
+        const auto native_error = GetLastError();
+        file_error("could not replace output file",
+                   std::error_code(static_cast<int>(native_error),
+                                   std::system_category()));
+    }
+#else
     std::error_code error;
     if (fs::is_regular_file(status)) {
         fs::permissions(temporary_file, status.permissions(), fs::perm_options::replace, error);
@@ -134,6 +161,7 @@ void write_file_atomically(const std::filesystem::path& destination,
     if (error) {
         file_error("could not replace output file", error);
     }
+#endif
 }
 
 }  // namespace course

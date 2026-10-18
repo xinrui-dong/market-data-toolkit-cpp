@@ -14,9 +14,22 @@ concurrency:
 
 jobs:
   build-checks:
-    name: CMake, CTest, benchmark and Doxygen
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    name: ${{ matrix.platform }} - CMake, CTest, benchmark and Doxygen
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: ubuntu
+            generator: Unix Makefiles
+          - os: macos-26
+            platform: macos
+            generator: Unix Makefiles
+          - os: windows-2022
+            platform: windows
+            generator: Visual Studio 17 2022
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     permissions:
       contents: read
     defaults:
@@ -28,41 +41,78 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install build and documentation tools
+      - name: Install Linux build and documentation tools
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y cmake doxygen g++ make python3
 
+      - name: Install macOS documentation tools
+        if: runner.os == 'macOS'
+        run: brew install doxygen
+
+      - name: Install Windows documentation tools
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install doxygen.install --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "Doxygen installation failed" }
+          "$env:ProgramFiles\doxygen\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Show tool versions
         run: |
           cmake --version
-          g++ --version
           doxygen --version
-          python3 --version
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python --version
+          else
+            c++ --version
+            python3 --version
+          fi
 
       - name: Configure Release build
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        if: runner.os != 'Windows'
+        run: cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel 2
+        if: runner.os != 'Windows'
+        run: cmake --build build --config Release --parallel 2
 
       - name: Run unit tests
-        run: ctest --test-dir build --output-on-failure --no-tests=error
+        if: runner.os != 'Windows'
+        run: ctest --test-dir build -C Release --verbose --output-on-failure --no-tests=error
+
+      - name: Run the complete Windows verification script
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CMAKE_GENERATOR: ${{ matrix.generator }}
+        run: ./scripts/verify.ps1
+
+      - name: Check the real EUR/USD example
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python scripts/check_market_example.py --app build/bin/market_data.exe --data-dir data
+          else
+            python3 scripts/check_market_example.py --app build/bin/market_data --data-dir data
+          fi
 
       - name: Run benchmarks
+        if: runner.os != 'Windows'
         run: |
-          cmake --build build --target run_benchmarks
+          cmake --build build --config Release --target run_benchmarks
           test -s build/benchmark.json
 
       - name: Generate Doxygen documentation
+        if: runner.os != 'Windows'
         run: |
-          cmake --build build --target docs
+          cmake --build build --config Release --target docs
           test -s build/docs/html/index.html
 
       - name: Save benchmark results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: benchmark-results
+          name: benchmark-results-${{ matrix.platform }}
           path: build/benchmark.json
           if-no-files-found: error
           retention-days: 14
@@ -70,13 +120,14 @@ jobs:
       - name: Save HTML documentation
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: doxygen-html
+          name: doxygen-html-${{ matrix.platform }}
           path: build/docs/html
           if-no-files-found: error
           retention-days: 14
 
       - name: Upload GitHub Pages artifact
         if: >-
+          matrix.platform == 'ubuntu' &&
           vars.ENABLE_PAGES == 'true' &&
           github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
           (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

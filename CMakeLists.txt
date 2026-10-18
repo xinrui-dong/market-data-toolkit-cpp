@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.24)
-project(market_data_toolkit VERSION 0.3.3 LANGUAGES CXX)
+project(market_data_toolkit VERSION 0.3.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+# A generator expression prevents Visual Studio from adding a second
+# configuration subdirectory, keeping the documented bin/ path on every OS.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<1:bin>")
 
 include(CTest)
 include(FetchContent)
@@ -30,6 +32,7 @@ target_link_libraries(market_data PRIVATE course_core)
 
 # Official release archives are included in the repository for offline builds.
 if(BUILD_TESTING)
+    find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
     set(DOCTEST_WITH_TESTS OFF CACHE BOOL "" FORCE)
     set(DOCTEST_WITH_MAIN_IN_STATIC_LIB OFF CACHE BOOL "" FORCE)
     set(DOCTEST_NO_INSTALL ON CACHE BOOL "" FORCE)
@@ -51,6 +54,13 @@ if(BUILD_TESTING)
             -P "${PROJECT_SOURCE_DIR}/tests/test_cli.cmake"
     )
     set_tests_properties(cli_end_to_end PROPERTIES TIMEOUT 30)
+    add_test(NAME real_market_example
+        COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/scripts/check_market_example.py"
+            --app "$<TARGET_FILE:market_data>"
+            --data-dir "${PROJECT_SOURCE_DIR}/data"
+    )
+    set_tests_properties(real_market_example PROPERTIES TIMEOUT 30)
     add_test(NAME benchmark_json_validation
         COMMAND "${CMAKE_COMMAND}"
             "-DWORK_DIR=${CMAKE_BINARY_DIR}/benchmark-validation-test"
