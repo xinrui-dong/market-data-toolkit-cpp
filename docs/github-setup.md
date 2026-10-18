@@ -1,20 +1,20 @@
 # GitHub Actions 与文档发布
 
-这个项目完成金融历史行情 CSV 检查、收益率与两种 SMA 算法计算。公开仓库、GitHub Actions 和 GitHub Pages 已完成首轮发布与验证，记录日期为 2026-10-14。
+这个项目完成金融历史行情 CSV 检查、收益率与两种 SMA 算法计算。本说明记录仓库结构、CI 和文档发布配置；2026-10-14 的首次发布证据保留在下方历史记录中。
 
 [公开仓库](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [文档网站](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [Actions 运行入口](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-## 仓库根目录与配置复用
+## 项目根目录与配置恢复
 
-**本仓库以本地 `cpp-course-template/` 的内容为根。** 仓库首页直接包含 `CMakeLists.txt`、`README.md`、`AGENTS.md`、`src/`、`tests/`、`benchmarks/` 和 `.github/`。在其他仓库复用时也应保持这个层级。
+**项目根目录是 `market-data-toolkit-cpp/`。** 仓库首页直接包含 `CMakeLists.txt`、`README.md`、`AGENTS.md`、`src/`、`tests/`、`benchmarks/` 和 `.github/`。本地整理后，源码位于作业目录的 `02_项目源码/market-data-toolkit-cpp/`；该外层分类目录不属于 GitHub 仓库。
 
-不要把包含课件、作业 PDF 和本机环境文件的整个课程文件夹上传。也不要再给源码套一层 `cpp-course-template/`：GitHub 只识别仓库根目录下的 `.github/workflows/`，本 workflow 的 CMake 命令也从仓库根目录运行。
+从 GitHub 下载的源码 ZIP 可能带有版本号后缀。解压后，进入直接包含 `CMakeLists.txt` 的目录运行构建命令。不要把包含课件、作业 PDF 和本机环境文件的整个课程文件夹上传，也不要将 `02_项目源码/` 作为仓库根目录：GitHub 从仓库根目录下的 `.github/workflows/` 读取 workflow，本项目的 CMake 命令也从仓库根目录运行。
 
-下面保留在其他仓库复用或重建配置的步骤；本项目的公开仓库已建立，首次推送与线上验证已完成。
+本项目的公开仓库已建立。重新克隆、解压源码或恢复发布配置时，按以下项目检查：
 
-1. 在 GitHub 创建公开仓库，名称使用最终确定的项目名。
+1. 从上方公开仓库克隆项目，或下载指定版本的源码 ZIP，进入项目根目录。
 2. 将项目源文件放到该仓库根目录，保留隐藏的 `.github/` 和 `.gitignore`，以及随项目提供的第三方源码包和许可说明。
-3. 不上传 `build/`、生成的 HTML、本机环境目录或凭据。依赖源码包按模板现有结构保留，保证新克隆也能构建。
+3. 不上传 `build/`、生成的 HTML、本机环境目录或凭据。依赖源码包按项目现有结构保留，保证新克隆也能构建。
 4. 推送后打开仓库的 **Actions**，检查 `Build, test, benchmark and docs` 这次运行的每个步骤。
 5. 后续修改功能时同步更新测试、benchmark、README 和 API 文档，再重新运行全部验证。
 
@@ -30,26 +30,28 @@ cmake --build build --target run_benchmarks
 cmake --build build --target docs
 ```
 
-CI 安装 CMake、G++、Make、Doxygen 和 Python 3（文档校验要求 Python ≥ 3.9，仅使用标准库）。单元测试和 benchmark 所需的第三方源码已随模板提供，CI 不再通过 apt 安装这两个库。实际工具版本在 Actions 日志中显示。
+CI 安装 CMake、G++、Make、Doxygen 和 Python 3（文档校验要求 Python ≥ 3.9，仅使用标准库）。单元测试和 benchmark 所需的第三方源码已随项目提供，CI 不再通过 apt 安装这两个库。实际工具版本在 Actions 日志中显示。
 
 benchmark 的实测结果打印在 **Run benchmarks** 日志中，并写入 `build/benchmark.json`；Doxygen HTML 输出到 `build/docs/html/`，随后检查 HTML 中的本地 href/src 引用与 HTML 锚点，缺失时文档目标失败。成功运行后，Actions 页面提供 `benchmark-results` 和 `doxygen-html` 两个 artifact，当前保留期设置为 14 天。artifact 是供下载检查的运行产物，**上传 artifact 不等于已发布公开文档网站**。
 
-0.3.0 将窗口扩展为 1、2、3、5、10、20、100，共 42 个工作负载，默认各测 3 次。CTest 同时运行文件替换、精确 CLI 错误检查，以及 benchmark JSON 校验器的回归测试。测速目标随后检查完整的 42 组原始测量，少测、重复编号或只剩统计汇总都会使 CI 失败。下方首轮记录保留的是 0.2.0 当时的 22 项测试和 18 组测速，当前提交的结果应查看对应运行。
+版本历史：0.3.0 将窗口扩展为 1、2、3、5、10、20、100，共 42 个工作负载，默认各测 3 次。CTest 同时运行文件替换、精确 CLI 错误检查，以及 benchmark JSON 校验器的回归测试。测速目标随后检查完整的 42 组原始测量，少测、重复编号或只剩统计汇总都会使 CI 失败。下方首轮记录保留的是首次发布时项目版本 0.2.0 的 22 项测试和 18 组测速，并通过该次提交和 CI 运行固定证据。当前提交的结果应查看对应运行。
 
-0.3.1 改用 Doxygen 静态菜单，修复短成员列表的字母跳转问题，并新增文档校验器回归测试，默认共 31 项 CTest。文档生成和链接校验均成功后才上传 HTML。
+0.3.1 的历史变更是改用 Doxygen 静态菜单，修复短成员列表的字母跳转问题，并新增文档校验器回归测试，默认共 31 项 CTest。文档生成和链接校验均成功后才上传 HTML。
+
+0.3.2 修正文档中的目录名称和措辞，沿用现有算法、31 项 CTest，以及 42 组工作负载各测 3 次的性能验证配置。
 
 流程没有用 `continue-on-error` 忽略编译、测试或测速错误。`--no-tests=error` 防止“没有发现任何测试”被当作测试成功。同一 ref 的新运行会取消旧运行，其他分支的运行继续保留；最终验收需等待准备提交的那次运行完整成功。
 
 ## 启用 GitHub Pages
 
-项目使用仓库变量 **`ENABLE_PAGES`** 作为明确的发布开关。本仓库已启用该开关，并完成首次 Pages 部署。在其他仓库复用时，若未设置或未设为 `true`，构建、测试、测速、Doxygen 生成和普通 artifact 上传仍运行，Pages 上传与部署会显示跳过。
+项目使用仓库变量 **`ENABLE_PAGES`** 作为明确的发布开关。本仓库已启用该开关，并完成首次 Pages 部署。恢复配置时，若未设置或未设为 `true`，构建、测试、测速、Doxygen 生成和普通 artifact 上传仍运行，Pages 上传与部署会显示跳过。
 
-复用时需要同时完成 Pages 发布设置和开关设置；只上传 HTML artifact 不会公开文档网站。
+需要同时完成 Pages 发布设置和开关设置；只上传 HTML artifact 不会公开文档网站。
 
-在其他公开仓库配置 Pages 时：
+检查或恢复本项目的 Pages 配置时：
 
 1. 打开仓库 **Settings → Pages**。
-2. 在 **Build and deployment → Source** 选择 **GitHub Actions**。已有本模板的 workflow，无需再添加另一份 Pages 模板。[GitHub 官方发布源说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
+2. 在 **Build and deployment → Source** 选择 **GitHub Actions**。项目已有完整 workflow，无需另外生成 Pages 配置。[GitHub 官方发布源说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
 3. 打开 **Settings → Secrets and variables → Actions → Variables**，选择 **New repository variable**。
 4. 名称填写 `ENABLE_PAGES`，值填写小写的 `true`，保存。这是普通仓库变量，不是 Secret。[GitHub 官方变量说明](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
 5. 回到 **Actions**，打开本 workflow，使用 **Run workflow**，选择仓库默认分支运行；也可再次向默认分支推送一项实际修改。要重跑完整流程，不能只重跑此前跳过的部署 job。
@@ -62,9 +64,9 @@ Pages 只在开关启用、且运行来自**默认分支的 push 或默认分支
 
 部署 job 依赖构建检查成功，使用 `github-pages` 环境和 `pages: write`、`id-token: write` 权限；构建 job 只有源码读取权限。这与 GitHub 官方的分离构建/部署方案一致。[GitHub 官方自定义 Pages workflow 说明](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 
-若 Pages 配置检查或部署失败，先检查 Source、仓库变量、默认分支与 `github-pages` 环境的分支限制；按报错修复后重跑。不要用忽略错误代替真正部署成功。无需为本模板额外保存个人访问令牌。
+若 Pages 配置检查或部署失败，先检查 Source、仓库变量、默认分支与 `github-pages` 环境的分支限制；按报错修复后重跑。不要用忽略错误代替真正部署成功。此流程无需额外保存个人访问令牌。
 
-## 首轮线上验证记录
+## 历史记录：0.2.0 首轮线上验证
 
 以下证据对应 2026-10-14 的首次成功提交。它记录已完成的线上运行；后续提交应分别检查其 Actions 与 Pages 部署，不能沿用本表证明新提交已经通过。
 
@@ -83,7 +85,7 @@ Pages 只在开关启用、且运行来自**默认分支的 push 或默认分支
 
 2026 年 10 月 14 日核对 GitHub 官方仓库后，workflow 将 action 固定到完整提交 SHA，并在旁边注释对应 release。更新时应先核对官方 release 和兼容性，再同时更新 SHA 与注释。
 
-| Action | 本模板采用的 release | 官方提交 |
+| Action | 项目采用的 release | 官方提交 |
 |---|---|---|
 | `actions/checkout` | v7.0.1 | [3d3c42e5aac5ba805825da76410c181273ba90b1](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1) |
 | `actions/upload-artifact` | v7.0.2 | [cf430e030ddbb5b0abf93d22962f4752f3646cd9](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) |

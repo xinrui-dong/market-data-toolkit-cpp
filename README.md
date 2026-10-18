@@ -4,7 +4,7 @@ A C++17 command-line tool for validating a historical close-price CSV, calculati
 
 [Repository](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [Published documentation](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [GitHub Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-**Homework submission:** [one-page acceptance index / 作业验收索引](docs/作业验收索引.md) · [fixed version v0.3.1](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.1). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
+**Homework submission:** [one-page acceptance index / 作业验收索引](docs/作业验收索引.md) · [fixed version v0.3.2](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.2). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
 
 The tool processes one asset, currency, and consistent price basis at a time. The included data is explicitly synthetic. It computes indicators; it does not place orders, model trading costs, or establish a profitable strategy.
 
