@@ -4,7 +4,7 @@ A C++17 command-line tool for validating a historical close-price CSV, calculati
 
 [Repository](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [Published documentation](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [GitHub Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-**Homework submission:** [one-page acceptance index / 作业验收索引](docs/作业验收索引.md) · [fixed version v0.3.2](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.2). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
+**Homework submission:** [one-page acceptance index](docs/acceptance-index.md) · [fixed version v0.3.3](https://github.com/xinrui-dong/market-data-toolkit-cpp/releases/tag/v0.3.3). The release records the exact submission commit and its successful CI run, with downloadable source and CI evidence. Start there when reviewing the six assignment requirements.
 
 The tool processes one asset, currency, and consistent price basis at a time. The included data is explicitly synthetic. It computes indicators; it does not place orders, model trading costs, or establish a profitable strategy.
 
@@ -73,7 +73,7 @@ For the four sample prices, the returns are approximately 0.10, -0.10, and 0.090
 
 Both use compensated summation to reduce rounding loss. The queue removes old observations without subtracting a large value from the total; neither method promises exact arithmetic or a universal error bound. Nonfinite intermediate sums or results cause an error, even when an exact mathematical mean would be finite. Default compiler settings do not use fast-math.
 
-[Algorithm details](docs/algorithms.md) describe the formulas, alignment, numerical limitations, and benchmark method. [Chinese usage notes](docs/使用说明.md) explain the program with the same small example.
+[Algorithm details](docs/algorithms.md) describe the formulas, alignment, numerical limitations, and benchmark method. The [user guide](docs/usage.md) explains the program with the same small example.
 
 ## Tests
 

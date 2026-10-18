@@ -27,12 +27,12 @@ class DocsValidationTests(unittest.TestCase):
     def test_anchors_encoded_urls_queries_and_directory_index(self):
         self.write("index.html", '''
             <div id="same&amp;page"></div><a href="#same%26page">same</a>
-            <a href="API%20%E8%AF%B4%E6%98%8E.htm?q=1&amp;x=2#price%20return">API</a>
+            <a href="API%20%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5.htm?q=1&amp;x=2#price%20return">API</a>
             <a href="guide/?query=value#legacy&amp;name">guide</a>
             <link href="style.css?version=2" rel="stylesheet">
             <img src="logo.svg#drawing"/><script src="app.js"></script>
         ''')
-        self.write("API 说明.htm", '<section id="price return"></section>')
+        self.write("API описание.htm", '<section id="price return"></section>')
         self.write("guide/index.html", '<a name="legacy&amp;name"></a>')
         for filename in ("style.css", "logo.svg", "app.js"):
             self.write(filename, "fixture")

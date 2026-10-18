@@ -1,26 +1,26 @@
-# GitHub Actions 与文档发布
+# GitHub Actions and documentation deployment
 
-这个项目完成金融历史行情 CSV 检查、收益率与两种 SMA 算法计算。本说明记录仓库结构、CI 和文档发布配置；2026-10-14 的首次发布证据保留在下方历史记录中。
+This project validates historical price CSV data, calculates simple price returns and trailing SMA, and compares two SMA algorithms. This guide describes the repository layout, CI checks and documentation deployment. The first successful publication on 2026-10-14 is recorded separately below.
 
-[公开仓库](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [文档网站](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [Actions 运行入口](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
+[Public repository](https://github.com/xinrui-dong/market-data-toolkit-cpp) · [Documentation](https://xinrui-dong.github.io/market-data-toolkit-cpp/) · [Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)
 
-## 项目根目录与配置恢复
+## Repository root and configuration recovery
 
-**项目根目录是 `market-data-toolkit-cpp/`。** 仓库首页直接包含 `CMakeLists.txt`、`README.md`、`AGENTS.md`、`src/`、`tests/`、`benchmarks/` 和 `.github/`。本地整理后，源码位于作业目录的 `02_项目源码/market-data-toolkit-cpp/`；该外层分类目录不属于 GitHub 仓库。
+**The repository root is `market-data-toolkit-cpp/`.** It directly contains `CMakeLists.txt`, `README.md`, `AGENTS.md`, `src/`, `tests/`, `benchmarks/` and `.github/`. A local course workspace may place this repository inside another folder used to organize coursework; that outer folder is not part of the GitHub repository.
 
-从 GitHub 下载的源码 ZIP 可能带有版本号后缀。解压后，进入直接包含 `CMakeLists.txt` 的目录运行构建命令。不要把包含课件、作业 PDF 和本机环境文件的整个课程文件夹上传，也不要将 `02_项目源码/` 作为仓库根目录：GitHub 从仓库根目录下的 `.github/workflows/` 读取 workflow，本项目的 CMake 命令也从仓库根目录运行。
+A source ZIP downloaded from GitHub may have a version suffix in its directory name. After extraction, run build commands from the directory that directly contains `CMakeLists.txt`. Keep the repository separate from the private course workspace containing lecture notes, assignment PDFs and local environment files. GitHub reads workflows from `.github/workflows/` at the repository root, and the CMake commands below also run from that root.
 
-本项目的公开仓库已建立。重新克隆、解压源码或恢复发布配置时，按以下项目检查：
+The public repository already exists. When cloning the project, extracting a release or restoring its publication settings:
 
-1. 从上方公开仓库克隆项目，或下载指定版本的源码 ZIP，进入项目根目录。
-2. 将项目源文件放到该仓库根目录，保留隐藏的 `.github/` 和 `.gitignore`，以及随项目提供的第三方源码包和许可说明。
-3. 不上传 `build/`、生成的 HTML、本机环境目录或凭据。依赖源码包按项目现有结构保留，保证新克隆也能构建。
-4. 推送后打开仓库的 **Actions**，检查 `Build, test, benchmark and docs` 这次运行的每个步骤。
-5. 后续修改功能时同步更新测试、benchmark、README 和 API 文档，再重新运行全部验证。
+1. Clone the public repository linked above or download the source ZIP for a specific release, then enter the repository root.
+2. Preserve `.github/`, `.gitignore`, the supplied third-party source archives and their license information.
+3. Keep `build/`, generated HTML, local environment directories and credentials out of Git. Retain the supplied dependency archives in their existing locations so a fresh checkout can build.
+4. After a push, open **Actions** and inspect every step in the corresponding **Build, test, benchmark and docs** run.
+5. When changing functionality, update the tests, benchmarks, README and API documentation as needed, then run the complete verification sequence again.
 
-## CI 自动运行什么
+## What CI runs
 
-`push`、`pull_request` 和手动 `workflow_dispatch` 都触发同一条 Ubuntu 流程：
+The same Ubuntu workflow is triggered by `push`, `pull_request` and manual `workflow_dispatch` events:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -30,62 +30,65 @@ cmake --build build --target run_benchmarks
 cmake --build build --target docs
 ```
 
-CI 安装 CMake、G++、Make、Doxygen 和 Python 3（文档校验要求 Python ≥ 3.9，仅使用标准库）。单元测试和 benchmark 所需的第三方源码已随项目提供，CI 不再通过 apt 安装这两个库。实际工具版本在 Actions 日志中显示。
+CI installs CMake, G++, Make, Doxygen and Python 3. Documentation validation requires Python 3.9 or newer and uses only its standard library. The unit-test and benchmark dependencies are supplied as source archives, so CI does not install those two libraries through apt. The Actions log records the actual tool versions.
 
-benchmark 的实测结果打印在 **Run benchmarks** 日志中，并写入 `build/benchmark.json`；Doxygen HTML 输出到 `build/docs/html/`，随后检查 HTML 中的本地 href/src 引用与 HTML 锚点，缺失时文档目标失败。成功运行后，Actions 页面提供 `benchmark-results` 和 `doxygen-html` 两个 artifact，当前保留期设置为 14 天。artifact 是供下载检查的运行产物，**上传 artifact 不等于已发布公开文档网站**。
+Measured benchmark results appear in the **Run benchmarks** log and in `build/benchmark.json`. Doxygen writes HTML to `build/docs/html/`; the documentation target then checks local `href` and `src` references and HTML anchors, failing on missing targets. A successful run provides `benchmark-results` and `doxygen-html` artifacts with a configured retention period of 14 days. Artifacts are downloadable run outputs; uploading HTML as an artifact does not publish a documentation website.
 
-版本历史：0.3.0 将窗口扩展为 1、2、3、5、10、20、100，共 42 个工作负载，默认各测 3 次。CTest 同时运行文件替换、精确 CLI 错误检查，以及 benchmark JSON 校验器的回归测试。测速目标随后检查完整的 42 组原始测量，少测、重复编号或只剩统计汇总都会使 CI 失败。下方首轮记录保留的是首次发布时项目版本 0.2.0 的 22 项测试和 18 组测速，并通过该次提交和 CI 运行固定证据。当前提交的结果应查看对应运行。
+The relevant version changes are:
 
-0.3.1 的历史变更是改用 Doxygen 静态菜单，修复短成员列表的字母跳转问题，并新增文档校验器回归测试，默认共 31 项 CTest。文档生成和链接校验均成功后才上传 HTML。
+- **0.3.0:** expanded SMA windows to 1, 2, 3, 5, 10, 20 and 100, giving 42 workloads with three repetitions each by default. CTest also covers file replacement, exact CLI errors and benchmark-validator regressions. The benchmark target checks all expected raw measurements; missing workloads, duplicate repetition indices or aggregate-only results fail verification.
+- **0.3.1:** enabled Doxygen static menus, repaired alphabetical navigation for short member lists and added documentation-validator regressions. The default configuration contains 31 CTest entries. HTML is uploaded only after documentation generation and local-link validation succeed.
+- **0.3.2:** corrected directory names and wording in the documentation, retaining the algorithms, 31 CTest entries and the 42-workload, three-repetition benchmark configuration.
+- **0.3.3:** uses English documentation filenames and English text throughout the deliverable. The algorithms and CI workflow are unchanged. Check the Actions run for the exact submission commit to establish its validation result.
 
-0.3.2 修正文档中的目录名称和措辞，沿用现有算法、31 项 CTest，以及 42 组工作负载各测 3 次的性能验证配置。
+The initial record below belongs to project version **0.2.0**, which had 22 CTest entries and 18 benchmark workloads. Its evidence is fixed by the listed commit and CI run; it does not establish the result of later commits.
 
-流程没有用 `continue-on-error` 忽略编译、测试或测速错误。`--no-tests=error` 防止“没有发现任何测试”被当作测试成功。同一 ref 的新运行会取消旧运行，其他分支的运行继续保留；最终验收需等待准备提交的那次运行完整成功。
+The workflow does not use `continue-on-error` to ignore compilation, test or benchmark failures. `--no-tests=error` prevents an empty test selection from being accepted as a successful test run. A new run cancels an older run for the same ref; runs on other branches continue. For grading criteria 2–5, inspect the completed CI run for the exact commit being submitted, including build, tests, benchmarks and documentation deployment.
 
-## 启用 GitHub Pages
+## Enable GitHub Pages
 
-项目使用仓库变量 **`ENABLE_PAGES`** 作为明确的发布开关。本仓库已启用该开关，并完成首次 Pages 部署。恢复配置时，若未设置或未设为 `true`，构建、测试、测速、Doxygen 生成和普通 artifact 上传仍运行，Pages 上传与部署会显示跳过。
+The repository variable **`ENABLE_PAGES`** is the explicit publication switch. It has been enabled in this repository, and the initial Pages deployment succeeded. When restoring the configuration, leaving this variable unset or assigning any value other than `true` still runs the build, tests, benchmarks, Doxygen generation and ordinary artifact uploads; Pages artifact upload and deployment are skipped.
 
-需要同时完成 Pages 发布设置和开关设置；只上传 HTML artifact 不会公开文档网站。
+Both the Pages publishing source and the repository variable must be configured. An uploaded HTML artifact alone does not publish the website.
 
-检查或恢复本项目的 Pages 配置时：
+To check or restore the Pages configuration:
 
-1. 打开仓库 **Settings → Pages**。
-2. 在 **Build and deployment → Source** 选择 **GitHub Actions**。项目已有完整 workflow，无需另外生成 Pages 配置。[GitHub 官方发布源说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
-3. 打开 **Settings → Secrets and variables → Actions → Variables**，选择 **New repository variable**。
-4. 名称填写 `ENABLE_PAGES`，值填写小写的 `true`，保存。这是普通仓库变量，不是 Secret。[GitHub 官方变量说明](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
-5. 回到 **Actions**，打开本 workflow，使用 **Run workflow**，选择仓库默认分支运行；也可再次向默认分支推送一项实际修改。要重跑完整流程，不能只重跑此前跳过的部署 job。
-6. 等待 `CMake, CTest, benchmark and Doxygen` 与 `Publish Doxygen to GitHub Pages` 都成功。
-7. 打开部署输出的 `page_url`，检查首页和至少一个示例函数页面。
-8. 将实际访问成功的地址写到 README 的文档链接位置。地址常见格式为 `https://<GitHub用户名>.github.io/<仓库名>/`；这只是格式示意，须以部署返回的真实地址为准。
-9. 推送 README 或文档的实际更新，确认默认分支的新提交会自动重新部署。
+1. Open **Settings → Pages** in the repository.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**. The repository already contains the complete workflow; no additional Pages workflow is needed. [GitHub publishing-source documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
+3. Open **Settings → Secrets and variables → Actions → Variables**, then select **New repository variable**.
+4. Enter `ENABLE_PAGES` as the name and lowercase `true` as the value. This is a repository variable, not a secret. [GitHub variables documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables)
+5. Return to **Actions**, open this workflow and choose **Run workflow** for the default branch, or push an actual change to that branch. To rerun the complete process, rerun the workflow rather than only a previously skipped deployment job.
+6. Wait for both **CMake, CTest, benchmark and Doxygen** and **Publish Doxygen to GitHub Pages** to succeed.
+7. Open the deployment's `page_url` and check the home page and at least one API function page.
+8. Put the successfully accessed URL in the README documentation link. The usual format is `https://<username>.github.io/<repository>/`; use the actual deployment URL.
+9. Push an actual README or documentation update and confirm that the new default-branch commit triggers deployment automatically.
 
-Pages 只在开关启用、且运行来自**默认分支的 push 或默认分支的手动触发**时部署。其他分支及 pull request 仍运行完整构建检查并保存 HTML artifact，但不会覆盖正式站点。
+Pages is deployed only when the switch is enabled and the event is a **push to the default branch or a manual run on the default branch**. Other branches and pull requests still run the complete build checks and save the HTML artifact without replacing the published site.
 
-部署 job 依赖构建检查成功，使用 `github-pages` 环境和 `pages: write`、`id-token: write` 权限；构建 job 只有源码读取权限。这与 GitHub 官方的分离构建/部署方案一致。[GitHub 官方自定义 Pages workflow 说明](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+The deployment job depends on successful build checks and uses the `github-pages` environment with `pages: write` and `id-token: write` permissions. The build job has read-only source access. This follows GitHub's separation of build and deployment jobs. [GitHub custom Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 
-若 Pages 配置检查或部署失败，先检查 Source、仓库变量、默认分支与 `github-pages` 环境的分支限制；按报错修复后重跑。不要用忽略错误代替真正部署成功。此流程无需额外保存个人访问令牌。
+If Pages configuration checks or deployment fail, inspect the publishing source, repository variable, default branch and branch restrictions on the `github-pages` environment. Fix the reported cause and rerun the workflow. Do not suppress failures in place of a successful deployment. No additional personal access token is required by this workflow.
 
-## 历史记录：0.2.0 首轮线上验证
+## Historical record: first online verification of 0.2.0
 
-以下证据对应 2026-10-14 的首次成功提交。它记录已完成的线上运行；后续提交应分别检查其 Actions 与 Pages 部署，不能沿用本表证明新提交已经通过。
+The following evidence belongs to the first successful publication on 2026-10-14. Later commits require their own Actions and Pages checks.
 
-| 检查项 | 首轮实际证据 |
+| Check | Evidence from the initial publication |
 |---|---|
-| 公开仓库 | [market-data-toolkit-cpp](https://github.com/xinrui-dong/market-data-toolkit-cpp)，已确认未登录可访问 |
-| 已验证提交 | [d63f6d43063192c686cc360565a17de514eeacfc](https://github.com/xinrui-dong/market-data-toolkit-cpp/commit/d63f6d43063192c686cc360565a17de514eeacfc) |
-| CI | [push 运行 38650139416](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions/runs/38650139416)，构建检查与 Pages 部署两个 job 的全部步骤成功，发布步骤未跳过 |
-| 测试 | 21 个 doctest 用例与 1 个 CLI 集成测试，共 22 项 CTest 通过 |
-| benchmark | 已核对该运行的 JSON artifact：18 个 workload、54 条 iteration 记录，每个 workload 重复 3 次 |
-| 文档 | [Pages 首页](https://xinrui-dong.github.io/market-data-toolkit-cpp/)与 [course API 页面](https://xinrui-dong.github.io/market-data-toolkit-cpp/namespacecourse.html)已确认匿名访问返回 HTTP 200 |
+| Public repository | [market-data-toolkit-cpp](https://github.com/xinrui-dong/market-data-toolkit-cpp), confirmed accessible without signing in at that time |
+| Verified commit | [d63f6d43063192c686cc360565a17de514eeacfc](https://github.com/xinrui-dong/market-data-toolkit-cpp/commit/d63f6d43063192c686cc360565a17de514eeacfc) |
+| CI | [Push run 38650139416](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions/runs/38650139416): all steps in both build checks and Pages deployment succeeded; publication was not skipped |
+| Tests | 21 doctest cases and one CLI integration test: all 22 CTest entries passed |
+| Benchmarks | The run's JSON artifact was checked: 18 workloads and 54 iteration records, with three repetitions per workload |
+| Documentation | The [Pages home page](https://xinrui-dong.github.io/market-data-toolkit-cpp/) and [course API page](https://xinrui-dong.github.io/market-data-toolkit-cpp/namespacecourse.html) returned HTTP 200 without authentication at that time |
 
-正式提交前，在 [Actions 入口](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions)找到准备提交的具体 commit，确认该次检查与部署完整成功，并再次打开文档链接。README 和本说明中的首轮记录不代替后续提交的验收。
+Before submitting, find the exact submission commit in [Actions](https://github.com/xinrui-dong/market-data-toolkit-cpp/actions), confirm that its checks and deployment completed successfully, and reopen the documentation links. Initial-publication records in this guide and the README do not replace verification of later commits.
 
-## Actions 版本依据
+## Pinned Actions versions
 
-2026 年 10 月 14 日核对 GitHub 官方仓库后，workflow 将 action 固定到完整提交 SHA，并在旁边注释对应 release。更新时应先核对官方 release 和兼容性，再同时更新 SHA 与注释。
+The workflow pins Actions to full commit SHAs, with adjacent comments naming their releases, as checked against the official repositories on 2026-10-14. Before updating an Action, verify its official release and compatibility, then update the SHA and release comment together.
 
-| Action | 项目采用的 release | 官方提交 |
+| Action | Release used by this project | Official commit |
 |---|---|---|
 | `actions/checkout` | v7.0.1 | [3d3c42e5aac5ba805825da76410c181273ba90b1](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1) |
 | `actions/upload-artifact` | v7.0.2 | [cf430e030ddbb5b0abf93d22962f4752f3646cd9](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) |
